@@ -33,8 +33,8 @@ class Comments(models.Model):
     )
 
 
-class Rating(models.Model):
-    score = models.IntegerField()
-
-    def __str__(self):
-        return self.score
+# class Rating(models.Model):
+#     score = models.IntegerField()
+#
+#     def __str__(self):
+#         return self.score
