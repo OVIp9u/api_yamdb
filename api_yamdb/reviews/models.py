@@ -37,6 +37,7 @@ class Comment(models.Model):
     def __str__(self):
         return self.text
 
+
 class Rating(models.Model):
     title = models.ForeignKey(
         Title,  on_delete=models.CASCADE, related_name='reviews'
