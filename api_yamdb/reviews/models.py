@@ -40,7 +40,7 @@ class Comment(models.Model):
 
 class Rating(models.Model):
     title = models.ForeignKey(
-        Title,  on_delete=models.CASCADE, related_name='reviews'
+        Title,  on_delete=models.CASCADE, related_name='rev'
     )
     score = models.IntegerField()
 
