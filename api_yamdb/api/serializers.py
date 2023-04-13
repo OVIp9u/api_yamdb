@@ -3,6 +3,7 @@ from rest_framework import serializers
 import datetime as dt
 from rest_framework import serializers
 from reviews.models import Review, Comment, Rating
+from users.models import User
 
 
 
@@ -91,4 +92,12 @@ class RatingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rating
+        fields = '__all__'
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователей"""
+
+    class Meta:
+        model = User
         fields = '__all__'

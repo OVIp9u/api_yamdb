@@ -7,12 +7,13 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from titles.models import Title, Genre, Category
+from users.models import User
 from rest_framework import viewsets, status
 from django.shortcuts import render
 from reviews.models import Review, Comment, Rating
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .serializers import CommentSerializer, ReviewSerializer, RatingSerializer
+from .serializers import CommentSerializer, ReviewSerializer, RatingSerializer, UserSerializer
 from rest_framework import viewsets
 from django.db.models import Avg
 
@@ -91,3 +92,10 @@ class RatingViewSet(viewsets.ModelViewSet):
         title = get_object_or_404(Title, pk=title_id)
         rating = title.annotate(score = Avg('reviews__score'))
         return rating
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """Вьюсет пользователей"""
+    queryset = User.objects.all()
+    lookup_field = 'username'
+    serializer_class = UserSerializer
