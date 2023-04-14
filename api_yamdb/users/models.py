@@ -21,7 +21,7 @@ class User(AbstractUser):
             'unique': ('Пользователь уже существует')
         }
     )
-    email = models.EmailField('Email адрес', unique=True)
+    email = models.EmailField('Email адрес', max_length=254, unique=True)
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
@@ -31,6 +31,10 @@ class User(AbstractUser):
         'Биография',
         blank=True,
     )
+
+
+    class Meta:
+        ordering = ['id']
 
     def __str__(self):
         return self.username
