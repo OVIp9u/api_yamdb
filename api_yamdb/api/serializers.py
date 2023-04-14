@@ -6,8 +6,6 @@ from reviews.models import Review, Comment, Rating
 from users.models import User
 
 
-
-
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -31,19 +29,11 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(required=False)
-    # genre = serializers.SlugRelatedField(
-    #     many=True,
-    #     slug_field='name',
-    #     queryset=Genre.objects.all()
-    # )
-    category = serializers.SlugRelatedField(
-        slug_field='name',
-        queryset=Category.objects.all()
-    )
+    genre = GenreSerializer(read_only=True, required=False, many=True)
+    category = CategorySerializer(read_only=True, required=False)
 
     class Meta:
-        fields = ('id', 'name', 'year', 'rating', 'description', 'genre', 'category')
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
         model = Title
         order_by = ('name',)
 
