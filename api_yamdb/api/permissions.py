@@ -19,7 +19,7 @@ class IsUserRole(BasePermission):
 
     def has_permission(self, request, view):
         if request.user.is_authenticated:
-            if request.user.role in self.allowed_user_roles:
+            if request.user.role in self.allowed_roles:
                 return True
         return False
 
@@ -30,7 +30,7 @@ class IsModeratorRole(BasePermission):
 
     def has_permission(self, request, view):
         if request.user.is_authenticated:
-            if request.user.role in self.allowed_user_roles:
+            if request.user.role in self.allowed_roles:
                 return True
         return False
 
@@ -41,7 +41,7 @@ class IsAdminRole(BasePermission):
 
     def has_permission(self, request, view):
         if request.user.is_authenticated:
-            if request.user.role in self.allowed_user_roles:
+            if request.user.role in self.allowed_roles:
                 return True
         return False
 

@@ -22,6 +22,10 @@ class CodeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('me - недопустимый никнейм!')
         return username
 
+    def validate_email(self, email):
+        if len(email) > 254:
+            raise serializers.ValidationError('email не может быть длиннее 254 символов')
+        return email
     
     class Meta:
         model = User
