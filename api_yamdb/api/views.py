@@ -10,10 +10,10 @@ from titles.models import Title, Genre, Category
 from users.models import User
 from rest_framework import viewsets, status
 from django.shortcuts import render
-from reviews.models import Review, Comment, Rating
+from reviews.models import Review, Comment
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .serializers import CommentSerializer, ReviewSerializer, RatingSerializer, UserSerializer
+from .serializers import CommentSerializer, ReviewSerializer, UserSerializer
 from rest_framework import viewsets
 from django.db.models import Avg
 
@@ -21,7 +21,7 @@ from .serializers import TitleSerializer, CategorySerializer, GenreSerializer
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg('reviews__score')).all()
     serializer_class = TitleSerializer
 
 
@@ -79,19 +79,6 @@ class CommentViewSet(viewsets.ModelViewSet):
         """Метод создания комментария"""
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
         serializer.save(author=self.request.user, review=review)
-
-
-class RatingViewSet(viewsets.ModelViewSet):
-    """Вьюсет рейтинга"""
-    serializer_class = RatingSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-    def get_queryset(self):
-        """Метод выбора рейтинга по произведению"""
-        title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Title, pk=title_id)
-        rating = title.annotate(score = Avg('reviews__score'))
-        return rating
 
 
 class UserViewSet(viewsets.ModelViewSet):

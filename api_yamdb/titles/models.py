@@ -37,12 +37,12 @@ class Title(models.Model):
         null=False,
     )
     description = models.TextField()
-    rating = models.CharField(
-        max_length=10,
-        default=None,
-        blank=True,
-        null=True,
-    )
+    #rating = models.CharField(
+    #    max_length=10,
+    #    default=None,
+    #    blank=True,
+    #    null=True,
+    #)
     # rating = models.ForeignKey(
     #     Rating,
     #     on_delete=models.SET_NULL,
