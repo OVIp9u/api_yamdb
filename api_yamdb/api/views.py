@@ -1,6 +1,4 @@
-
 from http.client import HTTPException
-
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -10,20 +8,50 @@ from titles.models import Title, Genre, Category
 from users.models import User
 from rest_framework import viewsets, status
 from django.shortcuts import render
-from reviews.models import Review, Comment, Rating
+from reviews.models import Review, Comment
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .serializers import CommentSerializer, ReviewSerializer, RatingSerializer, UserSerializer
+from .serializers import CommentSerializer, ReviewSerializer, UserSerializer
 from rest_framework import viewsets
 from django.db.models import Avg
-
 from .serializers import TitleSerializer, CategorySerializer, GenreSerializer
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg('reviews__score')).all()
     serializer_class = TitleSerializer
 
+    def perform_create(self, serializer):
+        category_slug = self.request.data['category']
+        categories = Category.objects.filter(slug=category_slug)
+        for category in categories:
+            serializer.validated_data['category'] = category
+
+        genre_slug = self.request.data['genre']
+        serializer.validated_data['genre'] = []
+        for slug in genre_slug:
+            genres = Genre.objects.filter(slug=slug)
+            for genre in genres:
+                serializer.validated_data['genre'].append(genre)
+
+        serializer.save()
+
+    def perform_update(self, serializer):
+        if 'category' in self.request.data:
+            category_slug = self.request.data['category']
+            categories = Category.objects.filter(slug=category_slug)
+            for category in categories:
+                serializer.validated_data['category'] = category
+
+        if 'genre' in self.request.data:
+            genre_slug = self.request.data['genre']
+            serializer.validated_data['genre'] = []
+            for slug in genre_slug:
+                genres = Genre.objects.filter(slug=slug)
+                for genre in genres:
+                    serializer.validated_data['genre'].append(genre)
+
+        serializer.save()
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -34,17 +62,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
-    serializer_class = GenreSerializer(many=True)
+    serializer_class = GenreSerializer
     lookup_field = 'slug'
-
-    def perform_create(self, serializer):
-        print(self.request.data)
-        serializer.save()
-
-    # def list(self, request):
-    #     queryset = Genre.objects.all()
-    #     serializer = GenreSerializer(self.get_queryset(), many=True)
-    #     return Response(serializer.data)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -79,19 +98,6 @@ class CommentViewSet(viewsets.ModelViewSet):
         """Метод создания комментария"""
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
         serializer.save(author=self.request.user, review=review)
-
-
-class RatingViewSet(viewsets.ModelViewSet):
-    """Вьюсет рейтинга"""
-    serializer_class = RatingSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-    def get_queryset(self):
-        """Метод выбора рейтинга по произведению"""
-        title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Title, pk=title_id)
-        rating = title.annotate(score = Avg('reviews__score'))
-        return rating
 
 
 class UserViewSet(viewsets.ModelViewSet):
