@@ -5,10 +5,10 @@ from titles.models import Title
 
 
 class Review(models.Model):
-    text = models.TextField('Текст отзыва')
+    text = models.TextField('Текст отзыва',blank=True,)
     score = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(10)]
-    )
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+    blank=False,)
     pub_date = models.DateTimeField(
         'Дата публикации', auto_now_add=True
     )

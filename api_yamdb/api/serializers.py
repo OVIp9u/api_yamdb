@@ -2,7 +2,7 @@ from titles.models import Title, Category, Genre
 from rest_framework import serializers
 import datetime as dt
 from rest_framework import serializers
-from reviews.models import Review, Comment, Rating
+from reviews.models import Review, Comment
 from users.models import User
 from django.shortcuts import get_object_or_404
 
@@ -45,7 +45,6 @@ class TitleSerializer(serializers.ModelSerializer):
         return value
 
 
-
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор отзыва"""
     author = serializers.SlugRelatedField(
@@ -57,11 +56,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    def validate_score(self, value):
-        if 1>value or 10<value:
-            raise serializers.ValidationError('Оценка должна быть от 1 до 10')
-        return value
-
     def validate(self, value):
         request = self.context['request']
         author = request.user
@@ -69,8 +63,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         title = get_object_or_404(Title, id=id)
         if request.method == 'Post' and Review.objects.filter(title=title, author=author).exists():
             raise serializers.ValidationError('К произведению можно оставить только один отзыв')
-
-
+        return value
+    
+    def validate_score(self, value):
+        if 1>value or 10<value:
+            raise serializers.ValidationError('Оценка должна быть от 1 до 10')
+        return value
+    
     class Meta:
         model = Review
         fields = '__all__'
@@ -83,20 +82,12 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only=True
     )
     review = serializers.SlugRelatedField(
-        slug_field='name',
+        slug_field='text',
         read_only=True
     )
 
     class Meta:
         model = Comment
-        fields = '__all__'
-
-class RatingSerializer(serializers.ModelSerializer):
-    """Сериализатор рейтинга"""
-    title = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = Rating
         fields = '__all__'
 
 
