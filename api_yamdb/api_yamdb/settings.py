@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import timedelta
 
@@ -13,6 +14,8 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 SERVICE_EMAIL = 'test@test.com'
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_mails')
 
 # Application definition
 
@@ -129,7 +132,9 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
+
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
+
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
@@ -142,4 +147,5 @@ SWAGGER_SETTINGS = {
             'in': 'header'
         }
     }
+
 }
