@@ -33,7 +33,6 @@ INSTALLED_APPS = [
 
     'users.apps.UsersConfig',
     'reviews.apps.ReviewsConfig',
-    'titles.apps.TitlesConfig',
     'api.apps.ApiConfig',
     'drf_yasg',
 ]
@@ -121,7 +120,6 @@ AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
