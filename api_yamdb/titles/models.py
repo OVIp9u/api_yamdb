@@ -1,5 +1,4 @@
 from django.db import models
-# from reviews.models import Rating
 
 
 class Category(models.Model):
@@ -23,10 +22,16 @@ class Title(models.Model):
         Category,
         on_delete=models.SET_NULL,
         related_name='category',
-        blank=False,
+        blank=True,
         null=True,
     )
-    genre = models.ManyToManyField(Genre, through='GenreTitle')
+    genre = models.ManyToManyField(
+        Genre,
+        through='GenreTitle',
+        related_name='genres',
+        blank=True,
+        #null=True,
+    )
     name = models.CharField(
         max_length=256,
         blank=False,
@@ -37,28 +42,24 @@ class Title(models.Model):
         null=False,
     )
     description = models.TextField()
-    rating = models.CharField(
-        max_length=10,
-        default=None,
-        blank=True,
-        null=True,
-    )
-    # rating = models.ForeignKey(
-    #     Rating,
-    #     on_delete=models.SET_NULL,
-    #     related_name='rating',
-    #     default=None,
-    #     blank=True,
-    #     null=True,
-    # )
 
     def __str__(self):
         return self.name
 
 
 class GenreTitle(models.Model):
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    genre = models.ForeignKey(
+        Genre,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return f'{self.genre} {self.title}'
