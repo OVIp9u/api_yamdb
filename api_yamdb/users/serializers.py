@@ -7,15 +7,8 @@ User = get_user_model()
 
 
 class CodeSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
-        validators=[
-            UniqueValidator(
-                queryset=User.objects.all(),
-                message='Недопустимый email.'
-            )
-        ]
-    )
-    username = serializers.RegexField(regex=r'^[\w.@+-]+$')
+    email = serializers.EmailField(max_length=254)
+    username = serializers.RegexField(regex=r'^[\w.@+-]+$', max_length=150)
 
     def validate_username(self, username):
         if username.lower() == 'me':
@@ -37,4 +30,4 @@ class TokenSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=150,
     )
-    conf_code = serializers.CharField()
+    confirmation_code = serializers.CharField()

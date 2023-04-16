@@ -1,11 +1,14 @@
 from http.client import HTTPException
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from rest_framework.decorators import action
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from titles.models import Title, Genre, Category
 from users.models import User
+from rest_framework.filters import SearchFilter
 from rest_framework import viewsets, status
 from django.shortcuts import render
 from reviews.models import Review, Comment
@@ -15,11 +18,13 @@ from .serializers import CommentSerializer, ReviewSerializer, UserSerializer
 from rest_framework import viewsets
 from django.db.models import Avg
 from .serializers import TitleSerializer, CategorySerializer, GenreSerializer
+from .permissions import IsAdminRole, IsAdminUserOrReadOnly, IsModeratorRole, ObjectPermissions, IsUserRole
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(rating=Avg('reviews__score')).all()
     serializer_class = TitleSerializer
+    permission_classes = [IsAdminUserOrReadOnly,]
 
     def perform_create(self, serializer):
         category_slug = self.request.data['category']
@@ -58,6 +63,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
+    permission_classes = [IsAdminUserOrReadOnly]
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -69,7 +75,7 @@ class GenreViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзыва"""
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ObjectPermissions,)
 
     def get_queryset(self):
         """Метод выбора отзыва по произведению"""
@@ -86,7 +92,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментариев"""
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    #permission_classes = (IsAdminRole | IsModeratorRole | IsObjectOwner)
 
     def get_queryset(self):
         """Метод выбора комментариев по отзыву"""
@@ -105,3 +111,27 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
+    #permission_classes = [IsAdminRole]
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
+    
+    @action(
+        methods=['patch', 'get'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+        url_path='me'
+    )
+    def me(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
+            if serializer.is_valid():
+                serializer.save(role=request.user.role)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
