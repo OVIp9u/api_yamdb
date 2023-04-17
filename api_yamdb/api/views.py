@@ -1,6 +1,14 @@
 from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from rest_framework.decorators import action
 from django.core.exceptions import PermissionDenied, ValidationError
 from users.models import User
+
+from rest_framework.filters import SearchFilter
+from rest_framework import viewsets, status
+from django.shortcuts import render
+from reviews.models import Review, Comment
+
 from rest_framework import viewsets, status, filters
 from reviews.models import Review, Comment, Title, Genre, Category
 from django.shortcuts import get_object_or_404
@@ -13,12 +21,14 @@ from .serializers import TitleReadSerializer, TitleWriteSerializer, CategorySeri
 from django_filters import rest_framework as filters_df
 from .filters import TitleFilter
 from .serializers import TitleSerializer, CategorySerializer, GenreSerializer
+
+from .permissions import IsAdminRole, IsAdminUserOrReadOnly, IsModeratorRole, ObjectPermissions, IsUserRole
 from .permissions import IsAdminUserOrReadOnly, IsUserRole, IsObjectOwner, IsAdminRole, IsModeratorRole
 
-
-
 class TitleViewSet(viewsets.ModelViewSet):
-    """Вьюсет Произведений."""
+  """Вьюсет Произведений."""
+    serializer_class = TitleSerializer
+    permission_classes = [IsAdminUserOrReadOnly,]
     queryset = Title.objects.all()
     filter_backends = (filters_df.DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = TitleFilter
@@ -34,6 +44,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
         return TitleWriteSerializer
 
+
     def get_queryset(self):
         if self.action in ('list', 'retrieve'):
             """Добавляет рейтинг Произведению при GET запросе."""
@@ -47,6 +58,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
+
+    permission_classes = [IsAdminUserOrReadOnly]
+
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
@@ -58,6 +72,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -81,7 +96,11 @@ class GenreViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзыва"""
     serializer_class = ReviewSerializer
+
+    permission_classes = (ObjectPermissions,)
+
     #permission_classes = (permissions.IsAuthenticated,)
+
 
     def get_queryset(self):
         """Метод выбора отзыва по произведению"""
@@ -99,7 +118,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментариев"""
     serializer_class = CommentSerializer
+
+    #permission_classes = (IsAdminRole | IsModeratorRole | IsObjectOwner)
+
     #permission_classes = (IsAdminRole,)
+
 
     def get_queryset(self):
         """Метод выбора комментариев по отзыву"""
@@ -118,3 +141,27 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
+    #permission_classes = [IsAdminRole]
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
+    
+    @action(
+        methods=['patch', 'get'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+        url_path='me'
+    )
+    def me(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
+            if serializer.is_valid():
+                serializer.save(role=request.user.role)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)

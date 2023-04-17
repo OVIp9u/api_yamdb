@@ -32,9 +32,18 @@ class User(AbstractUser):
         'Биография',
         blank=True,
     )
+    confirmation_code = models.CharField('Код подтверждения', max_length=6)
 
     class Meta:
         ordering = ['id']
 
     def __str__(self):
         return self.username
+    
+    @property
+    def is_moderator_role(self):
+        return self.role == self.Role.MODERATOR
+
+    @property
+    def is_admin_role(self):
+        return self.role == self.Role.ADMIN or self.is_superuser or self.is_staff
