@@ -4,13 +4,12 @@ from django.db import models
 
 
 class User(AbstractUser):
-    
+
     class Role(models.TextChoices):
         USER = 'user'
         MODERATOR = 'moderator'
         ADMIN = 'admin'
 
-    
     username = models.CharField(
         'Username',
         max_length=150,
@@ -37,11 +36,13 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-    
+
     @property
     def is_moderator_role(self):
         return self.role == self.Role.MODERATOR
 
     @property
     def is_admin_role(self):
-        return self.role == self.Role.ADMIN or self.is_superuser or self.is_staff
+        return (
+            self.role == self.Role.ADMIN or self.is_superuser or self.is_staff
+        )

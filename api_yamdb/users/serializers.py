@@ -16,9 +16,11 @@ class CodeSerializer(serializers.ModelSerializer):
 
     def validate_email(self, email):
         if len(email) > 254:
-            raise serializers.ValidationError('email не может быть длиннее 254 символов')
+            raise serializers.ValidationError(
+                'email не может быть длиннее 254 символов'
+            )
         return email
-    
+
     class Meta:
         model = User
         fields = ('username', 'email')

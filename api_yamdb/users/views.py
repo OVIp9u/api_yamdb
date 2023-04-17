@@ -27,6 +27,7 @@ def conf_code_generator(user):
     user_mail = [user.email]
     return send_mail(title, message, from_mail, user_mail)
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_token(request):
@@ -42,7 +43,7 @@ def get_token(request):
         return Response(
             {'token': str(token)},
             status=status.HTTP_200_OK
-            )
+        )
     return Response(
         {'confirmation_code': 'Неверный код подтверждения!'},
         status=status.HTTP_400_BAD_REQUEST
@@ -68,7 +69,9 @@ def get_conf_code(request):
     if User.objects.filter(username=username).exists():
         user = get_object_or_404(User, username=username)
         if user.email != email:
-            return Response({'Некорректный email!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'Некорректный email!'}, status=status.HTTP_400_BAD_REQUEST
+            )
     else:
         User.objects.create_user(username=username, email=email)
     user = get_object_or_404(User, email=email)

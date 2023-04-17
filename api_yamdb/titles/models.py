@@ -30,7 +30,6 @@ class Title(models.Model):
         through='GenreTitle',
         related_name='genres',
         blank=True,
-        #null=True,
     )
     name = models.CharField(
         max_length=256,

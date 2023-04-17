@@ -1,33 +1,27 @@
-from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from django.shortcuts import get_object_or_404, render
+from django_filters import rest_framework as filters_df
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from django.core.exceptions import PermissionDenied, ValidationError
+from rest_framework.filters import SearchFilter
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import (AllowAny, IsAdminUser, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
+from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
-from rest_framework.filters import SearchFilter
-from rest_framework import viewsets, status
-from django.shortcuts import render
-from reviews.models import Review, Comment
-
-from rest_framework import viewsets, status, filters
-from reviews.models import Review, Comment, Title, Genre, Category
-from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.pagination import PageNumberPagination
-from .serializers import CommentSerializer, ReviewSerializer, UserSerializer
-from rest_framework import viewsets
-from django.db.models import Avg
-from .serializers import TitleReadSerializer, TitleWriteSerializer, CategorySerializer, GenreSerializer
-from django_filters import rest_framework as filters_df
 from .filters import TitleFilter
-from .serializers import CategorySerializer, GenreSerializer
-
-from .permissions import IsAdminRole, IsAdminUserOrReadOnly, IsModeratorRole, ObjectPermissions, IsUserRole
-from .permissions import IsAdminUserOrReadOnly, IsUserRole, IsAdminRole, IsModeratorRole
+from .permissions import (IsAdminRole, IsAdminUserOrReadOnly, IsModeratorRole,
+                          IsUserRole, ObjectPermissions)
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer,
+                          TitleReadSerializer, TitleWriteSerializer,
+                          UserSerializer)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет Произведений."""
+    permission_classes = [IsAuthenticatedOrReadOnly | IsAdminRole]
     queryset = Title.objects.all()
     filter_backends = (filters_df.DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = TitleFilter
@@ -42,13 +36,7 @@ class TitleViewSet(viewsets.ModelViewSet):
             return TitleReadSerializer
 
         return TitleWriteSerializer
-'''
-    def get_queryset(self):
-        """Добавляет рейтинг Произведению при GET запросе."""
-        if self.action in ('list', 'retrieve'):
-            return Title.objects.annotate(avg_rating=Avg('reviews__score'))
-        return Title.objects.all()
-'''
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """Вьюсет Категорий произведений"""
@@ -84,6 +72,7 @@ class GenreViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзыва"""
@@ -126,12 +115,12 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
-    #permission_classes = [IsAdminRole]
+    permission_classes = [IsAdminRole,]
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
-    
+
     @action(
-        methods=['patch', 'get'],
+        methods=['PATCH', 'GET'],
         detail=False,
         permission_classes=[IsAuthenticated],
         url_path='me'
@@ -139,8 +128,9 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request, *args, **kwargs):
         if request.method == 'GET':
             serializer = UserSerializer(request.user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        
+            return Response(
+                serializer.data, status=status.HTTP_200_OK
+            )
         if request.method == 'PATCH':
             serializer = UserSerializer(
                 request.user, data=request.data, partial=True

@@ -19,13 +19,11 @@ schema_view = get_schema_view(
 )
 
 
-
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/auth/', include('users.urls')),
     path('api/v1/', include('api.urls')),
-        path( 
+    path(
         'redoc/',
         TemplateView.as_view(template_name='redoc.html'),
         name='redoc'

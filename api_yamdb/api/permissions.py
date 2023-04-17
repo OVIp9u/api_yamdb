@@ -26,6 +26,7 @@ class IsModeratorRole(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.is_moderator_role
 
+
 class IsAdminRole(BasePermission):
     """Права доступа для роли Admin"""
 
