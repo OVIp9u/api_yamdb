@@ -1,9 +1,10 @@
 import datetime as dt
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from reviews.models import Review, Comment, Title, Category, Genre, GenreTitle
-
-from django.shortcuts import get_object_or_404
+from reviews.models import Category, Comment, Genre, GenreTitle, Review, Title
+from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -34,10 +35,14 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """Получает произведение."""
     genre = GenreSerializer(read_only=True, required=False, many=True)
     category = CategorySerializer(read_only=True, required=False)
-    avg_rating = serializers.FloatField()
+    rating = serializers.SerializerMethodField()
+    
+    def get_rating(self, obj):
+        rating = obj.reviews.aggregate(Avg('score', default=0))
+        return rating.get('score__avg')
 
     class Meta:
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category', 'avg_rating')
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category', 'rating')
         model = Title
         order_by = ('name',)
 
@@ -73,15 +78,16 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    def validate(self, value):
-        request = self.context['request']
-        author = request.user
-        id = self.context['view'].kwargs.get('title_id')
-        title = get_object_or_404(Title, id=id)
-        if request.method == 'Post' and Review.objects.filter(title=title, author=author).exists():
-            raise serializers.ValidationError('К произведению можно оставить только один отзыв')
-        return value
-    
+    def create(self, validated_data):
+        if Review.objects.filter(
+            author=self.context['request'].user,
+            title=validated_data.get('title')
+        ).exists():
+            raise serializers.ValidationError(
+                'К произведению можно оставить только один отзыв'
+            )
+        return Review.objects.create(**validated_data)
+
     def validate_score(self, value):
         if 1>value or 10<value:
             raise serializers.ValidationError('Оценка должна быть от 1 до 10')

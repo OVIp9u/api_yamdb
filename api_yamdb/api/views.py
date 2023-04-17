@@ -20,15 +20,14 @@ from django.db.models import Avg
 from .serializers import TitleReadSerializer, TitleWriteSerializer, CategorySerializer, GenreSerializer
 from django_filters import rest_framework as filters_df
 from .filters import TitleFilter
-from .serializers import TitleSerializer, CategorySerializer, GenreSerializer
+from .serializers import CategorySerializer, GenreSerializer
 
 from .permissions import IsAdminRole, IsAdminUserOrReadOnly, IsModeratorRole, ObjectPermissions, IsUserRole
-from .permissions import IsAdminUserOrReadOnly, IsUserRole, IsObjectOwner, IsAdminRole, IsModeratorRole
+from .permissions import IsAdminUserOrReadOnly, IsUserRole, IsAdminRole, IsModeratorRole
+
 
 class TitleViewSet(viewsets.ModelViewSet):
-  """Вьюсет Произведений."""
-    serializer_class = TitleSerializer
-    permission_classes = [IsAdminUserOrReadOnly,]
+    """Вьюсет Произведений."""
     queryset = Title.objects.all()
     filter_backends = (filters_df.DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = TitleFilter
@@ -43,24 +42,19 @@ class TitleViewSet(viewsets.ModelViewSet):
             return TitleReadSerializer
 
         return TitleWriteSerializer
-
-
+'''
     def get_queryset(self):
+        """Добавляет рейтинг Произведению при GET запросе."""
         if self.action in ('list', 'retrieve'):
-            """Добавляет рейтинг Произведению при GET запросе."""
             return Title.objects.annotate(avg_rating=Avg('reviews__score'))
-
         return Title.objects.all()
-
+'''
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """Вьюсет Категорий произведений"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
-
-    permission_classes = [IsAdminUserOrReadOnly]
-
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
@@ -72,7 +66,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -92,15 +85,11 @@ class GenreViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзыва"""
     serializer_class = ReviewSerializer
-
-    permission_classes = (ObjectPermissions,)
-
-    #permission_classes = (permissions.IsAuthenticated,)
-
+    pagination_class = PageNumberPagination
+    permission_classes = [ObjectPermissions,]
 
     def get_queryset(self):
         """Метод выбора отзыва по произведению"""
@@ -118,11 +107,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментариев"""
     serializer_class = CommentSerializer
-
-    #permission_classes = (IsAdminRole | IsModeratorRole | IsObjectOwner)
-
-    #permission_classes = (IsAdminRole,)
-
+    permission_classes = [ObjectPermissions,]
 
     def get_queryset(self):
         """Метод выбора комментариев по отзыву"""

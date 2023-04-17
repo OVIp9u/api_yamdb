@@ -1,5 +1,6 @@
-from .views import get_conf_code, get_token
 from django.urls import include, path
+
+from .views import get_conf_code, get_token
 
 urlpatterns = [
     path('', include(

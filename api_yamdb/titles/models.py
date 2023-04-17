@@ -41,7 +41,10 @@ class Title(models.Model):
         blank=False,
         null=False,
     )
-    description = models.TextField()
+    description = models.TextField(
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return self.name

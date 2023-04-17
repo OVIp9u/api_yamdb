@@ -1,8 +1,6 @@
-from django.db import models
-from django.contrib.auth.validators import UnicodeUsernameValidator
-
 from django.contrib.auth.models import AbstractUser
-from .validators import MeUsername
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.db import models
 
 
 class User(AbstractUser):

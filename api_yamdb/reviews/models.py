@@ -1,5 +1,6 @@
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+
 from users.models import User
 
 
@@ -48,7 +49,9 @@ class Title(models.Model):
         blank=False,
         null=False,
     )
-    description = models.TextField()
+    description = models.TextField(
+        null=True,
+    )
     rating = models.FloatField(
         blank=True,
         null=True,
@@ -95,6 +98,12 @@ class Review(models.Model):
 
     class Meta:
         ordering = ('-pub_date',)
+        constraints = [
+            models.UniqueConstraint(
+            fields=['title', 'author'],
+            name='only_one_review'
+            )
+        ]
 
     def __str__(self):
         return self.text
