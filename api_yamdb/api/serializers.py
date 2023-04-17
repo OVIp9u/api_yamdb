@@ -34,9 +34,10 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """Получает произведение."""
     genre = GenreSerializer(read_only=True, required=False, many=True)
     category = CategorySerializer(read_only=True, required=False)
+    avg_rating = serializers.FloatField()
 
     class Meta:
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category', 'rating')
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category', 'avg_rating')
         model = Title
         order_by = ('name',)
 

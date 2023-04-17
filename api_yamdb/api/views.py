@@ -5,25 +5,30 @@ from rest_framework import viewsets, status, filters
 from reviews.models import Review, Comment, Title, Genre, Category
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.pagination import PageNumberPagination
 from .serializers import CommentSerializer, ReviewSerializer, UserSerializer
 from rest_framework import viewsets
 from django.db.models import Avg
 from .serializers import TitleReadSerializer, TitleWriteSerializer, CategorySerializer, GenreSerializer
 from django_filters import rest_framework as filters_df
-from reviews.filters import TitleFilter
+from .filters import TitleFilter
 from .serializers import TitleSerializer, CategorySerializer, GenreSerializer
 from .permissions import IsAdminUserOrReadOnly, IsUserRole, IsObjectOwner, IsAdminRole, IsModeratorRole
+
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет Произведений."""
     queryset = Title.objects.all()
-    filter_backends = (filters_df.DjangoFilterBackend,)
+    filter_backends = (filters_df.DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = TitleFilter
-    # serializer_class = TitleReadSerializer
-    # queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
+    pagination_class = PageNumberPagination
+    ordering_fields = ('name', 'rating')
 
     def get_serializer_class(self):
+        """Меняет сериалайзер POST/PUT/PATCH запросов
+        для передачи поля slug.
+        """
         if self.action in ('list', 'retrieve'):
             return TitleReadSerializer
 
@@ -31,10 +36,8 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.action in ('list', 'retrieve'):
-            rating = Title.objects.annotate(t_rating=Avg('reviews__score'))
-            print(rating[1].rating)
-
-            return rating
+            """Добавляет рейтинг Произведению при GET запросе."""
+            return Title.objects.annotate(avg_rating=Avg('reviews__score'))
 
         return Title.objects.all()
 
