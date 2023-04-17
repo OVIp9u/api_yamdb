@@ -7,6 +7,9 @@ class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
 
+    class Meta:
+        ordering = ('name',)
+
     def __str__(self):
         return self.name
 
@@ -14,6 +17,9 @@ class Category(models.Model):
 class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
+
+    class Meta:
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
@@ -46,8 +52,11 @@ class Title(models.Model):
     rating = models.FloatField(
         blank=True,
         null=True,
-        default=0,
+        default=None,
     )
+
+    class Meta:
+        ordering = ('name', '-rating', 'year')
 
     def __str__(self):
         return self.name
@@ -84,6 +93,9 @@ class Review(models.Model):
         Title,  on_delete=models.CASCADE, related_name='reviews'
     )
 
+    class Meta:
+        ordering = ('-pub_date',)
+
     def __str__(self):
         return self.text
 
@@ -99,6 +111,9 @@ class Comment(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='comments'
     )
+
+    class Meta:
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.text

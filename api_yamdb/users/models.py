@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.validators import UnicodeUsernameValidator
 
 from django.contrib.auth.models import AbstractUser
+from .validators import MeUsername
 
 
 class User(AbstractUser):
@@ -31,7 +32,6 @@ class User(AbstractUser):
         'Биография',
         blank=True,
     )
-
 
     class Meta:
         ordering = ['id']
