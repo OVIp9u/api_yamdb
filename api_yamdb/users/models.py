@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.validators import UnicodeUsernameValidator
 
 from django.contrib.auth.models import AbstractUser
+from .validators import MeUsername
 
 
 class User(AbstractUser):
@@ -32,7 +33,6 @@ class User(AbstractUser):
         blank=True,
     )
     confirmation_code = models.CharField('Код подтверждения', max_length=6)
-
 
     class Meta:
         ordering = ['id']

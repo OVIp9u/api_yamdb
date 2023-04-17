@@ -57,3 +57,23 @@ python manage.py migrate
 
 ```
 python manage.py runserver
+
+```
+
+В директории /static/data/ находится тестовая
+база данных.
+Для автоматического добавления тестовых записей
+в базу данных запустите команду 
+(также см. пункт ниже):
+
+```
+python manage.py download_data
+```
+
+Для предварительного очищения базы данных от ранее 
+добавленных записей необходимо добавить дополнительный
+аргумент "--delete-existing".
+
+```
+python manage.py download_data --delete-existing
+```

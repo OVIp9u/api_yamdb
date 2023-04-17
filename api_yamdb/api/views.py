@@ -1,81 +1,106 @@
-from http.client import HTTPException
-from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.http import HttpResponseBadRequest
-from django.shortcuts import get_object_or_404
-from titles.models import Title, Genre, Category
 from users.models import User
+
 from rest_framework.filters import SearchFilter
 from rest_framework import viewsets, status
 from django.shortcuts import render
 from reviews.models import Review, Comment
+
+from rest_framework import viewsets, status, filters
+from reviews.models import Review, Comment, Title, Genre, Category
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.pagination import PageNumberPagination
 from .serializers import CommentSerializer, ReviewSerializer, UserSerializer
 from rest_framework import viewsets
 from django.db.models import Avg
+from .serializers import TitleReadSerializer, TitleWriteSerializer, CategorySerializer, GenreSerializer
+from django_filters import rest_framework as filters_df
+from .filters import TitleFilter
 from .serializers import TitleSerializer, CategorySerializer, GenreSerializer
-from .permissions import IsAdminRole, IsAdminUserOrReadOnly, IsModeratorRole, ObjectPermissions, IsUserRole
 
+from .permissions import IsAdminRole, IsAdminUserOrReadOnly, IsModeratorRole, ObjectPermissions, IsUserRole
+from .permissions import IsAdminUserOrReadOnly, IsUserRole, IsObjectOwner, IsAdminRole, IsModeratorRole
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg('reviews__score')).all()
+  """Вьюсет Произведений."""
     serializer_class = TitleSerializer
     permission_classes = [IsAdminUserOrReadOnly,]
+    queryset = Title.objects.all()
+    filter_backends = (filters_df.DjangoFilterBackend, filters.OrderingFilter)
+    filterset_class = TitleFilter
+    pagination_class = PageNumberPagination
+    ordering_fields = ('name', 'rating')
 
-    def perform_create(self, serializer):
-        category_slug = self.request.data['category']
-        categories = Category.objects.filter(slug=category_slug)
-        for category in categories:
-            serializer.validated_data['category'] = category
+    def get_serializer_class(self):
+        """Меняет сериалайзер POST/PUT/PATCH запросов
+        для передачи поля slug.
+        """
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
 
-        genre_slug = self.request.data['genre']
-        serializer.validated_data['genre'] = []
-        for slug in genre_slug:
-            genres = Genre.objects.filter(slug=slug)
-            for genre in genres:
-                serializer.validated_data['genre'].append(genre)
+        return TitleWriteSerializer
 
-        serializer.save()
 
-    def perform_update(self, serializer):
-        if 'category' in self.request.data:
-            category_slug = self.request.data['category']
-            categories = Category.objects.filter(slug=category_slug)
-            for category in categories:
-                serializer.validated_data['category'] = category
+    def get_queryset(self):
+        if self.action in ('list', 'retrieve'):
+            """Добавляет рейтинг Произведению при GET запросе."""
+            return Title.objects.annotate(avg_rating=Avg('reviews__score'))
 
-        if 'genre' in self.request.data:
-            genre_slug = self.request.data['genre']
-            serializer.validated_data['genre'] = []
-            for slug in genre_slug:
-                genres = Genre.objects.filter(slug=slug)
-                for genre in genres:
-                    serializer.validated_data['genre'].append(genre)
-
-        serializer.save()
+        return Title.objects.all()
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
+    """Вьюсет Категорий произведений"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
+
     permission_classes = [IsAdminUserOrReadOnly]
+
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 
 class GenreViewSet(viewsets.ModelViewSet):
+    """Вьюсет Жанров произведений"""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзыва"""
     serializer_class = ReviewSerializer
+
     permission_classes = (ObjectPermissions,)
+
+    #permission_classes = (permissions.IsAuthenticated,)
+
 
     def get_queryset(self):
         """Метод выбора отзыва по произведению"""
@@ -85,14 +110,19 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Метод создания отзыва"""
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, pk=title_id)
         serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментариев"""
     serializer_class = CommentSerializer
+
     #permission_classes = (IsAdminRole | IsModeratorRole | IsObjectOwner)
+
+    #permission_classes = (IsAdminRole,)
+
 
     def get_queryset(self):
         """Метод выбора комментариев по отзыву"""
