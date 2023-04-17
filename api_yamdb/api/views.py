@@ -19,6 +19,8 @@ from .serializers import (CategorySerializer, CommentSerializer,
                           UserSerializer)
 
 
+
+
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет Произведений."""
     permission_classes = [IsAuthenticatedOrReadOnly | IsAdminRole]
