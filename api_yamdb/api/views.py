@@ -4,15 +4,15 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import (AllowAny, IsAdminUser, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import IsAuthenticated
+import rest_framework.mixins
 from rest_framework.response import Response
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import (IsAdminRole, IsAdminUserOrReadOnly, IsModeratorRole,
-                          IsUserRole, ObjectPermissions)
+from .permissions import (IsAdminRole, IsAdminUserOrReadOnly,
+                          ObjectPermissions)
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
@@ -23,7 +23,7 @@ from .serializers import (CategorySerializer, CommentSerializer,
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет Произведений."""
-    permission_classes = [IsAuthenticatedOrReadOnly | IsAdminRole]
+    permission_classes = [IsAdminUserOrReadOnly | IsAdminRole]
     queryset = Title.objects.all()
     filter_backends = (filters_df.DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = TitleFilter
@@ -47,6 +47,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    permission_classes = [IsAdminUserOrReadOnly | IsAdminRole]
 
     def retrieve(self, request, *args, **kwargs):
         return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -65,6 +66,7 @@ class GenreViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    permission_classes = [IsAdminUserOrReadOnly | IsAdminRole]
 
     def retrieve(self, request, *args, **kwargs):
         return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -117,9 +119,10 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
-    permission_classes = [IsAdminRole,]
+    permission_classes = [IsAdminRole]
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
+
 
     @action(
         methods=['PATCH', 'GET'],

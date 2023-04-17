@@ -13,20 +13,6 @@ class IsAdminUserOrReadOnly(BasePermission):
         )
 
 
-class IsUserRole(BasePermission):
-    """Права доступа для роли User"""
-
-    def has_permission(self, request, view):
-        return request.user.is_authenticated
-
-
-class IsModeratorRole(BasePermission):
-    """Права доступа для роли Moderator"""
-
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.is_moderator_role
-
-
 class IsAdminRole(BasePermission):
     """Права доступа для роли Admin"""
 
