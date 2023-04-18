@@ -1,24 +1,20 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters_df
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-import rest_framework.mixins
 from rest_framework.response import Response
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import (IsAdminRole, IsAdminUserOrReadOnly,
-                          ObjectPermissions)
+from .permissions import IsAdminRole, IsAdminUserOrReadOnly, ObjectPermissions
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
                           UserSerializer)
-
-
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -119,10 +115,10 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
-    permission_classes = [IsAdminRole]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
-
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     @action(
         methods=['PATCH', 'GET'],

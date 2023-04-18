@@ -1,6 +1,5 @@
 from random import randint
 
-from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from rest_framework import status
@@ -36,7 +35,9 @@ def get_token(request):
     user = get_object_or_404(
         User, username=serializer.validated_data.get("username")
     )
-    if serializer.validated_data.get("confirmation_code") == user.confirmation_code:
+    if serializer.validated_data.get(
+        "confirmation_code"
+    ) == user.confirmation_code:
         token = AccessToken.for_user(user)
         return Response(
             {'token': str(token)},
