@@ -17,11 +17,13 @@ class IsAdminRole(BasePermission):
     """Права доступа для роли Admin"""
 
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.is_admin_role
+        return (request.user.is_authenticated and request.user.is_admin_role)
 
 
-class ObjectPermissions(BasePermission):
-    "Проверка прав к объекту для владельца"
+class IsAdminIsModeratorIsAuthor(BasePermission):
+    """Проверка прав на просмотр для анонимных пользователей.
+    Права на изменения объекта доступны только Администратору,
+    Модератору и автору объекта"""
 
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS or request.user.is_authenticated
@@ -29,6 +31,7 @@ class ObjectPermissions(BasePermission):
     def has_object_permission(self, request, view, obj):
         return (
             request.method in SAFE_METHODS
+            or request.user.is_staff
             or request.user.is_admin_role
             or request.user.is_moderator_role
             or obj.author == request.user
