@@ -4,6 +4,26 @@ from django.core.management.base import BaseCommand
 from reviews.models import Category, Comment, Genre, GenreTitle, Review, Title
 from users.models import User
 
+OBJECTS_LIST = {
+    'Произведения': Title,
+    'Жанры': Genre,
+    'Категории': Category,
+    'Отзывы': Review,
+    'Комментарии': Comment,
+    'Жанры_Произведения': GenreTitle,
+    'Пользователи': User,
+}
+
+
+def clear_data(self):
+    for key, value in OBJECTS_LIST.items():
+        value.objects.all().delete()
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Существующие записи "{key}" были удалены.'
+            )
+        )
+
 
 class Command(BaseCommand):
     help = "Загружает CSV данные из файла data."
@@ -20,6 +40,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Загрузка Категорий."""
+
+        if options["delete_existing"]:
+            clear_data(self)
+
         records = []
         with open(
             'static/data/category.csv', encoding='utf-8', newline=''
@@ -31,13 +55,6 @@ class Command(BaseCommand):
                 )
                 records.append(record)
 
-        if options["delete_existing"]:
-            Category.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(
-                    'Существующие записи "Категорий" были удалены.'
-                )
-            )
         Category.objects.bulk_create(records)
         self.stdout.write(
             self.style.SUCCESS('Все записи "Категорий" сохранены')
@@ -55,13 +72,6 @@ class Command(BaseCommand):
                 )
                 records.append(record)
 
-        if options["delete_existing"]:
-            Genre.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(
-                    'Существующие записи "Жанров" были удалены.'
-                )
-            )
         Genre.objects.bulk_create(records)
         self.stdout.write(
             self.style.SUCCESS('Все записи "Жанров" сохранены')
@@ -82,13 +92,6 @@ class Command(BaseCommand):
                 )
                 records.append(record)
 
-        if options["delete_existing"]:
-            Title.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(
-                    'Существующие записи "Произведений" были удалены.'
-                )
-            )
         Title.objects.bulk_create(records)
         self.stdout.write(
             self.style.SUCCESS('Все записи "Произведений" сохранены')
@@ -108,13 +111,6 @@ class Command(BaseCommand):
                 )
                 records.append(record)
 
-        if options["delete_existing"]:
-            GenreTitle.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(
-                    'Существующие записи "Жанров-Произведений" были удалены.'
-                )
-            )
         GenreTitle.objects.bulk_create(records)
         self.stdout.write(
             self.style.SUCCESS('Все записи "Жанров-Произведений" сохранены')
@@ -138,11 +134,6 @@ class Command(BaseCommand):
                 )
                 records.append(record)
 
-        if options["delete_existing"]:
-            User.objects.all().delete()
-            self.stdout.write(self.style.SUCCESS(
-                'Существующие записи "Пользователей" были удалены.')
-            )
         User.objects.bulk_create(records)
         self.stdout.write(
             self.style.SUCCESS('Все записи "Пользователей" сохранены')
@@ -165,13 +156,6 @@ class Command(BaseCommand):
                 )
                 records.append(record)
 
-        if options["delete_existing"]:
-            Review.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(
-                    'Существующие записи "Отзывов" были удалены.'
-                )
-            )
         Review.objects.bulk_create(records)
         self.stdout.write(
             self.style.SUCCESS('Все записи "Отзывов" сохранены')
@@ -193,13 +177,6 @@ class Command(BaseCommand):
                 )
                 records.append(record)
 
-        if options["delete_existing"]:
-            Comment.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(
-                    'Существующие записи "Комментариев" были удалены.'
-                )
-            )
         Comment.objects.bulk_create(records)
         self.stdout.write(
             self.style.SUCCESS('Все записи "Комментариев" сохранены')

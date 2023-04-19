@@ -1,5 +1,4 @@
-from django.db.models import Avg
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters_df
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -13,8 +12,7 @@ from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import (IsAdminRole, IsAdminUserOrReadOnly,
-                          ObjectPermissions)
+from .permissions import IsAdminRole, IsAdminUserOrReadOnly, ObjectPermissions
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
@@ -72,7 +70,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзыва"""
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [ObjectPermissions,]
+    permission_classes = [ObjectPermissions, ]
 
     def get_queryset(self):
         """Метод выбора отзыва по произведению"""
@@ -90,7 +88,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментариев"""
     serializer_class = CommentSerializer
-    permission_classes = [ObjectPermissions,]
+    permission_classes = [ObjectPermissions, ]
 
     def get_queryset(self):
         """Метод выбора комментариев по отзыву"""
@@ -109,11 +107,10 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
-    permission_classes = [IsAdminRole]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
-
 
     @action(
         methods=['PATCH', 'GET'],
