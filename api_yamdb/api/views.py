@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404, render
 from django_filters import rest_framework as filters_df
 from rest_framework import filters, status, viewsets
@@ -5,8 +6,9 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-import rest_framework.mixins
+from rest_framework import mixins
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
@@ -38,7 +40,11 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleWriteSerializer
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(mixins.CreateModelMixin,
+                      mixins.DestroyModelMixin,
+                      mixins.ListModelMixin,
+                      GenericViewSet
+                      ):
     """Вьюсет Категорий произведений"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -47,17 +53,12 @@ class CategoryViewSet(viewsets.ModelViewSet):
     search_fields = ('name',)
     permission_classes = [IsAdminUserOrReadOnly | IsAdminRole]
 
-    def retrieve(self, request, *args, **kwargs):
-        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def update(self, request, *args, **kwargs):
-        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def partial_update(self, request, *args, **kwargs):
-        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(mixins.CreateModelMixin,
+                   mixins.DestroyModelMixin,
+                   mixins.ListModelMixin,
+                   GenericViewSet
+                   ):
     """Вьюсет Жанров произведений"""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -65,15 +66,6 @@ class GenreViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     permission_classes = [IsAdminUserOrReadOnly | IsAdminRole]
-
-    def retrieve(self, request, *args, **kwargs):
-        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def update(self, request, *args, **kwargs):
-        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def partial_update(self, request, *args, **kwargs):
-        return Response(self.request.data, status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -120,6 +112,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminRole]
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
 
     @action(
@@ -143,3 +136,4 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+
