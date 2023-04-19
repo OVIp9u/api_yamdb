@@ -3,9 +3,17 @@ from django.db import models
 from users.models import User
 
 
-class Category(models.Model):
+class TitleAttribute(models.Model):
+    """Абстрактная модель для атрибутов произведения."""
     name = models.CharField(max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
+
+    class Meta:
+        abstract = True
+
+
+class Category(TitleAttribute):
+    """Категории произведений."""
 
     class Meta:
         ordering = ('name',)
@@ -14,9 +22,8 @@ class Category(models.Model):
         return self.name
 
 
-class Genre(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(max_length=50, unique=True)
+class Genre(TitleAttribute):
+    """Жанры произведений."""
 
     class Meta:
         ordering = ('name',)
@@ -26,6 +33,7 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
+    """Произведения."""
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -51,20 +59,16 @@ class Title(models.Model):
     description = models.TextField(
         null=True,
     )
-    rating = models.FloatField(
-        blank=True,
-        null=True,
-        default=None,
-    )
 
     class Meta:
-        ordering = ('name', '-rating', 'year')
+        ordering = ('name', 'year')
 
     def __str__(self):
         return self.name
 
 
 class GenreTitle(models.Model):
+    """Связь M2M жанров и произведений."""
     genre = models.ForeignKey(
         Genre,
         on_delete=models.CASCADE,
