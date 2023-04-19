@@ -51,14 +51,10 @@ class Title(models.Model):
     description = models.TextField(
         null=True,
     )
-    rating = models.FloatField(
-        blank=True,
-        null=True,
-        default=None,
-    )
+
 
     class Meta:
-        ordering = ('name', '-rating', 'year')
+        ordering = ('name', 'year')
 
     def __str__(self):
         return self.name

@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
+from django.db.models import Avg
 
 from .filters import TitleFilter
 from .permissions import IsAdminRole, IsAdminUserOrReadOnly, ObjectPermissions
@@ -20,7 +21,7 @@ from .serializers import (CategorySerializer, CommentSerializer,
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет Произведений."""
     permission_classes = [IsAdminUserOrReadOnly | IsAdminRole]
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg('reviews__score')).all()
     filter_backends = (filters_df.DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = TitleFilter
     pagination_class = PageNumberPagination

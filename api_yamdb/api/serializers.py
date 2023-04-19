@@ -4,6 +4,7 @@ from django.db.models import Avg
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
+from django.shortcuts import get_object_or_404
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -34,11 +35,8 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """Получает произведение."""
     genre = GenreSerializer(read_only=True, required=False, many=True)
     category = CategorySerializer(read_only=True, required=False)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(read_only=True)
 
-    def get_rating(self, obj):
-        rating = obj.reviews.aggregate(Avg('score', default=0))
-        return rating.get('score__avg')
 
     class Meta:
         fields = (
@@ -83,15 +81,20 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    def create(self, validated_data):
-        if Review.objects.filter(
-            author=self.context['request'].user,
-            title=validated_data.get('title')
-        ).exists():
+    def validate(self, data):
+        request = self.context['request']
+        author = request.user
+        title_id = self.context.get('view').kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        if (
+            request.method == 'POST' and Review.objects.filter(
+            author=author,
+            title=title).exists()
+        ):
             raise serializers.ValidationError(
                 'К произведению можно оставить только один отзыв'
             )
-        return Review.objects.create(**validated_data)
+        return data
 
     def validate_score(self, value):
         if 1 > value or 10 < value:
