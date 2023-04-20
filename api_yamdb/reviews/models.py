@@ -86,6 +86,7 @@ class GenreTitle(models.Model):
 
 
 class Review(models.Model):
+    """Модель отзывов"""
     text = models.TextField('Текст отзыва', blank=True,)
     score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
@@ -114,6 +115,7 @@ class Review(models.Model):
 
 
 class Comment(models.Model):
+    """Модель комментариев к отзывам"""
     review = models.ForeignKey(
         Review, on_delete=models.CASCADE, related_name='comments'
     )

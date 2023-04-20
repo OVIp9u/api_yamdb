@@ -1,23 +1,28 @@
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters_df
 from rest_framework import filters, mixins, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_simplejwt.tokens import AccessToken
 
+from api_yamdb.settings import SERVICE_EMAIL
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import IsAdminRole, IsAdminUserOrReadOnly, ObjectPermissions
+from .permissions import (IsAdminIsModeratorIsAuthor, IsAdminRole,
+                          IsAdminUserOrReadOnly)
 from .serializers import (CategorySerializer, CommentSerializer,
-                          GenreSerializer, ReviewSerializer,
+                          GenreSerializer, ReviewSerializer, SignUpSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
-                          UserSerializer)
+                          TokenSerializer, UserSerializer)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -71,7 +76,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзыва"""
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [ObjectPermissions, ]
+    permission_classes = [IsAdminIsModeratorIsAuthor, ]
 
     def get_queryset(self):
         """Метод выбора отзыва по произведению"""
@@ -89,7 +94,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментариев"""
     serializer_class = CommentSerializer
-    permission_classes = [ObjectPermissions, ]
+    permission_classes = [IsAdminIsModeratorIsAuthor, ]
 
     def get_queryset(self):
         """Метод выбора комментариев по отзыву"""
@@ -132,5 +137,53 @@ class UserViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 serializer.save(role=request.user.role)
                 return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors,
+                        status=status.HTTP_400_BAD_REQUEST)
+
+
+def code_generation_and_sender(user):
+    """Функция создает код подтверждения и отправляет
+    письмо с ним на почту пользователя"""
+    code = default_token_generator.make_token(user)
+    user.confirmation_code = code
+    user.save()
+    title = 'Код авторизации Yamdb.'
+    message = (f'Здравствуйте, {user}!'
+               f'Ваш код подтверждения {code}')
+    from_mail = SERVICE_EMAIL
+    user_mail = [user.email]
+    return send_mail(title, message, from_mail, user_mail)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_token(request):
+    """Функция получения токена"""
+    serializer = TokenSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(
+        User, username=serializer.validated_data.get("username")
+    )
+    if serializer.validated_data.get(
+        "confirmation_code"
+    ) == user.confirmation_code:
+        token = AccessToken.for_user(user)
+        return Response(
+            {'token': str(token)},
+            status=status.HTTP_200_OK
+        )
+    return Response(
+        {'confirmation_code': 'Неверный код подтверждения!'},
+        status=status.HTTP_400_BAD_REQUEST
+    )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def signup(request):
+    """Функция регистрации пользователей"""
+    serializer = SignUpSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user, _ = User.objects.get_or_create(**serializer.validated_data)
+    code_generation_and_sender(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
