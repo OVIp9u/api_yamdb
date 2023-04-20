@@ -76,7 +76,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзыва"""
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
+
     permission_classes = [IsAdminIsModeratorIsAuthor, ]
+
 
     def get_queryset(self):
         """Метод выбора отзыва по произведению"""
@@ -94,7 +96,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментариев"""
     serializer_class = CommentSerializer
+
     permission_classes = [IsAdminIsModeratorIsAuthor, ]
+
 
     def get_queryset(self):
         """Метод выбора комментариев по отзыву"""
