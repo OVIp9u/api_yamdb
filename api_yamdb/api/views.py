@@ -79,7 +79,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     permission_classes = [IsAdminIsModeratorIsAuthor, ]
 
-
     def get_queryset(self):
         """Метод выбора отзыва по произведению"""
         title_id = self.kwargs.get('title_id')
@@ -98,7 +97,6 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
 
     permission_classes = [IsAdminIsModeratorIsAuthor, ]
-
 
     def get_queryset(self):
         """Метод выбора комментариев по отзыву"""
