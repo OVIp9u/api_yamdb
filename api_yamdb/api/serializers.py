@@ -1,7 +1,9 @@
 import datetime as dt
+import re
 
-from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
@@ -34,11 +36,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """Получает произведение."""
     genre = GenreSerializer(read_only=True, required=False, many=True)
     category = CategorySerializer(read_only=True, required=False)
-    rating = serializers.SerializerMethodField()
-
-    def get_rating(self, obj):
-        rating = obj.reviews.aggregate(Avg('score', default=0))
-        return rating.get('score__avg')
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         fields = (
@@ -83,20 +81,21 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    def create(self, validated_data):
-        if Review.objects.filter(
-            author=self.context['request'].user,
-            title=validated_data.get('title')
-        ).exists():
+    def validate(self, data):
+        request = self.context['request']
+        author = request.user
+        title_id = self.context.get('view').kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        if (
+            request.method == 'POST' and Review.objects.filter(
+                author=author,
+                title=title
+            ).exists()
+        ):
             raise serializers.ValidationError(
                 'К произведению можно оставить только один отзыв'
             )
-        return Review.objects.create(**validated_data)
-
-    def validate_score(self, value):
-        if 1 > value or 10 < value:
-            raise serializers.ValidationError('Оценка должна быть от 1 до 10')
-        return value
+        return data
 
     class Meta:
         model = Review
@@ -125,3 +124,51 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = 'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+
+
+class SignUpSerializer(serializers.Serializer):
+    """Сериализатор регистрации пользователей"""
+    username = serializers.CharField(
+        max_length=150,
+        required=True,
+    )
+    email = serializers.EmailField(
+        max_length=254,
+        required=True,
+    )
+
+    def validate(self, data):
+        """Запрещает пользователям присваивать себе имя me
+        и использовать повторные username и email и запрещает
+        использовать недопустимые символы."""
+        regex = re.sub(r'^[\w.@+-]+$', '', data.get('username'))
+        if data.get('username') in regex:
+            raise serializers.ValidationError(
+                f'Имя пользователя не должно содержать {regex}'
+            )
+        if data.get('username') == 'me':
+            raise serializers.ValidationError(
+                'Использовать имя "me" запрещено'
+            )
+        if User.objects.filter(
+            username=data.get('username'),
+            email=data.get('email')
+        ).exists():
+            return data
+        elif User.objects.filter(username=data.get('username')).exists():
+            raise serializers.ValidationError(
+                'Данное имя пользователя уже занято!'
+            )
+        elif User.objects.filter(email=data.get('email')).exists():
+            raise serializers.ValidationError(
+                'Данный Email уже занят!'
+            )
+        return data
+
+
+class TokenSerializer(serializers.Serializer):
+    """Сериализатор получения токена"""
+    username = serializers.CharField(
+        max_length=150,
+    )
+    confirmation_code = serializers.CharField()
