@@ -1,11 +1,20 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from users.models import User
 
 
-class Category(models.Model):
+class TitleAttribute(models.Model):
+    """Абстрактная модель для атрибутов произведения."""
     name = models.CharField(max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
+
+    class Meta:
+        abstract = True
+
+
+class Category(TitleAttribute):
+    """Категории произведений."""
 
     class Meta:
         ordering = ('name',)
@@ -14,9 +23,8 @@ class Category(models.Model):
         return self.name
 
 
-class Genre(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(max_length=50, unique=True)
+class Genre(TitleAttribute):
+    """Жанры произведений."""
 
     class Meta:
         ordering = ('name',)
@@ -26,6 +34,7 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
+    """Произведения."""
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -52,7 +61,6 @@ class Title(models.Model):
         null=True,
     )
 
-
     class Meta:
         ordering = ('name', 'year')
 
@@ -61,6 +69,7 @@ class Title(models.Model):
 
 
 class GenreTitle(models.Model):
+    """Связь M2M жанров и произведений."""
     genre = models.ForeignKey(
         Genre,
         on_delete=models.CASCADE,
@@ -78,7 +87,7 @@ class GenreTitle(models.Model):
 
 class Review(models.Model):
     text = models.TextField('Текст отзыва', blank=True,)
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         blank=False,)
     pub_date = models.DateTimeField(
@@ -121,12 +130,3 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.text
-
-# class Rating(models.Model):
-#     title = models.ForeignKey(
-#         Title,  on_delete=models.CASCADE, related_name='rev'
-#     )
-#     score = models.IntegerField()
-#
-#     def __str__(self):
-#         return self.score

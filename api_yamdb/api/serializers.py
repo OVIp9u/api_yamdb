@@ -1,10 +1,10 @@
 import datetime as dt
 
-from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
-from django.shortcuts import get_object_or_404
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -36,7 +36,6 @@ class TitleReadSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(read_only=True, required=False, many=True)
     category = CategorySerializer(read_only=True, required=False)
     rating = serializers.IntegerField(read_only=True)
-
 
     class Meta:
         fields = (
@@ -88,18 +87,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         title = get_object_or_404(Title, id=title_id)
         if (
             request.method == 'POST' and Review.objects.filter(
-            author=author,
-            title=title).exists()
+                author=author,
+                title=title
+            ).exists()
         ):
             raise serializers.ValidationError(
                 'К произведению можно оставить только один отзыв'
             )
         return data
-
-    def validate_score(self, value):
-        if 1 > value or 10 < value:
-            raise serializers.ValidationError('Оценка должна быть от 1 до 10')
-        return value
 
     class Meta:
         model = Review
