@@ -1,5 +1,5 @@
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.validators import RegexValidator
 from django.db import models
 
 
@@ -14,10 +14,10 @@ class User(AbstractUser):
         'Username',
         max_length=150,
         unique=True,
-        validators=[UnicodeUsernameValidator()],
-        error_messages={
-            'unique': ('Пользователь уже существует')
-        }
+        validators=[RegexValidator(
+            regex=r'^[\w.@+-]+$',
+            message='Имя пользователя содержит недопустимый символ'
+        )]
     )
     email = models.EmailField('Email адрес', max_length=254, unique=True)
     role = models.CharField(

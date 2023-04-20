@@ -1,4 +1,5 @@
 import datetime as dt
+import re
 
 from django.db.models import Avg
 from rest_framework import serializers
@@ -125,3 +126,52 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = 'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+
+
+class SignUpSerializer(serializers.Serializer):
+    """Сериализатор регистрации пользователей"""
+    username = serializers.CharField(
+        max_length=150,
+        required=True,
+    )
+    email = serializers.EmailField(
+        max_length=254,
+        required=True,
+    )
+
+    def validate(self, data):
+        """Запрещает пользователям присваивать себе имя me
+        и использовать повторные username и email и запрещает
+        использовать недопустимые символы."""
+        regex = re.sub(r'^[\w.@+-]+$', '', data.get('username'))
+        if data.get('username') in regex:
+            raise serializers.ValidationError(
+                f'Имя пользователя не должно содержать {regex}'
+            )
+        if data.get('username') == 'me':
+            raise serializers.ValidationError(
+                'Использовать имя "me" запрещено'
+            )
+        if User.objects.filter(
+            username=data.get('username'),
+            email=data.get('email')
+        ).exists():
+            return data
+        elif User.objects.filter(username=data.get('username')).exists():
+            raise serializers.ValidationError(
+                'Данное имя пользователя уже занято!'
+            )
+        elif User.objects.filter(email=data.get('email')).exists():
+            raise serializers.ValidationError(
+                'Данный Email уже занят!'
+            )
+        return data
+
+
+class TokenSerializer(serializers.Serializer):
+    """Сериализатор получения токена"""
+
+    username = serializers.CharField(
+        max_length=150,
+    )
+    confirmation_code = serializers.CharField()
