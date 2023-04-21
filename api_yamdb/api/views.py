@@ -17,12 +17,16 @@ from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import (IsAdminIsModeratorIsAuthor, IsAdminRole,
-                          IsAdminUserOrReadOnly)
-from .serializers import (CategorySerializer, CommentSerializer,
-                          GenreSerializer, ReviewSerializer, SignUpSerializer,
-                          TitleReadSerializer, TitleWriteSerializer,
-                          TokenSerializer, UserSerializer)
+from .permissions import (
+    IsAdminIsModeratorIsAuthor, IsAdminRole,
+    IsAdminUserOrReadOnly
+)
+from .serializers import (
+    CategorySerializer, CommentSerializer,
+    GenreSerializer, ReviewSerializer, SignUpSerializer,
+    TitleReadSerializer, TitleWriteSerializer,
+    TokenSerializer, UserSerializer
+)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -44,11 +48,12 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleWriteSerializer
 
 
-class CategoryViewSet(mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin,
-                      mixins.ListModelMixin,
-                      GenericViewSet
-                      ):
+class CategoryViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet
+):
     """Вьюсет Категорий произведений"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -58,11 +63,12 @@ class CategoryViewSet(mixins.CreateModelMixin,
     permission_classes = [IsAdminUserOrReadOnly | IsAdminRole]
 
 
-class GenreViewSet(mixins.CreateModelMixin,
-                   mixins.DestroyModelMixin,
-                   mixins.ListModelMixin,
-                   GenericViewSet
-                   ):
+class GenreViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet
+):
     """Вьюсет Жанров произведений"""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -132,15 +138,12 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(
                 serializer.data, status=status.HTTP_200_OK
             )
-        if request.method == 'PATCH':
-            serializer = UserSerializer(
-                request.user, data=request.data, partial=True
-            )
-            if serializer.is_valid():
-                serializer.save(role=request.user.role)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors,
-                        status=status.HTTP_400_BAD_REQUEST)
+        serializer = UserSerializer(
+            request.user, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(role=request.user.role)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 def code_generation_and_sender(user):
@@ -166,9 +169,8 @@ def get_token(request):
     user = get_object_or_404(
         User, username=serializer.validated_data.get("username")
     )
-    if serializer.validated_data.get(
-        "confirmation_code"
-    ) == user.confirmation_code:
+    confirmation_code = serializer.validated_data.get("confirmation_code")
+    if confirmation_code == user.confirmation_code:
         token = AccessToken.for_user(user)
         return Response(
             {'token': str(token)},
