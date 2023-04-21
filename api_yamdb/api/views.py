@@ -17,12 +17,16 @@ from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import (IsAdminIsModeratorIsAuthor, IsAdminRole,
-                          IsAdminUserOrReadOnly)
-from .serializers import (CategorySerializer, CommentSerializer,
-                          GenreSerializer, ReviewSerializer, SignUpSerializer,
-                          TitleReadSerializer, TitleWriteSerializer,
-                          TokenSerializer, UserSerializer)
+from .permissions import (
+    IsAdminIsModeratorIsAuthor, IsAdminRole,
+    IsAdminUserOrReadOnly
+)
+from .serializers import (
+    CategorySerializer, CommentSerializer,
+    GenreSerializer, ReviewSerializer, SignUpSerializer,
+    TitleReadSerializer, TitleWriteSerializer,
+    TokenSerializer, UserSerializer
+)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -44,11 +48,12 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleWriteSerializer
 
 
-class CategoryViewSet(mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin,
-                      mixins.ListModelMixin,
-                      GenericViewSet
-                      ):
+class CategoryViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet
+):
     """Вьюсет Категорий произведений"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -58,11 +63,12 @@ class CategoryViewSet(mixins.CreateModelMixin,
     permission_classes = [IsAdminUserOrReadOnly | IsAdminRole]
 
 
-class GenreViewSet(mixins.CreateModelMixin,
-                   mixins.DestroyModelMixin,
-                   mixins.ListModelMixin,
-                   GenericViewSet
-                   ):
+class GenreViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet
+):
     """Вьюсет Жанров произведений"""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
