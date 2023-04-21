@@ -138,15 +138,12 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(
                 serializer.data, status=status.HTTP_200_OK
             )
-        if request.method == 'PATCH':
-            serializer = UserSerializer(
-                request.user, data=request.data, partial=True
-            )
-            if serializer.is_valid():
-                serializer.save(role=request.user.role)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors,
-                        status=status.HTTP_400_BAD_REQUEST)
+        serializer = UserSerializer(
+            request.user, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(role=request.user.role)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 def code_generation_and_sender(user):
@@ -172,9 +169,8 @@ def get_token(request):
     user = get_object_or_404(
         User, username=serializer.validated_data.get("username")
     )
-    if serializer.validated_data.get(
-        "confirmation_code"
-    ) == user.confirmation_code:
+    confirmation_code = serializer.validated_data.get("confirmation_code")
+    if confirmation_code == user.confirmation_code:
         token = AccessToken.for_user(user)
         return Response(
             {'token': str(token)},
